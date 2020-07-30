@@ -31,5 +31,9 @@ ufw allow ${wg_server_port}/udp
 ufw --force enable
 systemctl enable wg-quick@wg0.service
 systemctl start wg-quick@wg0.service
-snap install amazon-ssm-agent --classic
-snap start amazon-ssm-agent
+mkdir /tmp/ssm
+cd /tmp/ssm
+wget https://s3.region.amazonaws.com/amazon-ssm-region/latest/debian_386/amazon-ssm-agent.deb
+dpkg -i amazon-ssm-agent.deb
+status amazon-ssm-agent
+start amazon-ssm-agent
