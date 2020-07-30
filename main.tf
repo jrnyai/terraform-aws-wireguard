@@ -58,12 +58,8 @@ resource "aws_launch_configuration" "wireguard_launch_config" {
   lifecycle {
     create_before_destroy = true
   }
-  block_device_mappings {
-    device_name = "/dev/xvda"
-    ebs {
-      volume_size= 8
-      encrypted= true
-    }
+  root_block_device {
+    encrypted= true
   }
 }
 
