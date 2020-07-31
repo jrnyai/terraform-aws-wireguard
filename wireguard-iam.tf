@@ -46,11 +46,6 @@ resource "aws_iam_role_policy_attachment" "wireguard_roleattach" {
   count      = (var.eip_id != "disabled" ? 1 : 0) # only used for EIP mode
 }
 
-resource "aws_iam_role_policy_attachment" "wireshark_worker_role_ssm" {
-  role       = aws_iam_role.wireguard_role.name
-  policy_arn = aws_iam_policy.wireshark_worker_role_ssm.arn
-}
-
 resource "aws_iam_instance_profile" "wireguard_profile" {
   name  = "tf-wireguard-${var.env}"
   role  = aws_iam_role.wireguard_role.name
