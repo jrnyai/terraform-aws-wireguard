@@ -36,6 +36,21 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
+data "aws_iam_policy_document" "allow-assume-role-from-ec2-service" {
+  statement {
+    actions = [
+      "sts:AssumeRole",
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    effect = "Allow"
+  }
+}
+
 # turn the sg into a sorted list of string
 locals {
   sg_wireguard_external = sort([aws_security_group.sg_wireguard_external.id])
@@ -44,6 +59,22 @@ locals {
 # clean up and concat the above wireguard default sg with the additional_security_group_ids
 locals {
   security_groups_ids = compact(concat(var.additional_security_group_ids, local.sg_wireguard_external))
+}
+
+
+resource "aws_iam_role" "wireshark_worker_role" {
+  name               = "wireshark_worker_role"
+  assume_role_policy = data.aws_iam_policy_document.allow-assume-role-from-ec2-service.json
+}
+
+resource "aws_iam_role_policy_attachment" "wireshark_worker_role_ssm" {
+  role = aws_iam_role.wireshark_worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "wireshark_worker_role" {
+  name = "wireshark_worker_role"
+  role = aws_iam_role.wireshark_worker_role.name
 }
 
 resource "aws_launch_configuration" "wireguard_launch_config" {
@@ -55,7 +86,7 @@ resource "aws_launch_configuration" "wireguard_launch_config" {
   user_data                   = data.template_file.user_data.rendered
   security_groups             = local.security_groups_ids
   associate_public_ip_address = (var.eip_id != "disabled" ? true : false)
-
+  iam_instance_profile        = aws_iam_instance_profile.wireshark_worker_role.name
   lifecycle {
     create_before_destroy = true
   }
