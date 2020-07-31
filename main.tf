@@ -61,32 +61,15 @@ locals {
   security_groups_ids = compact(concat(var.additional_security_group_ids, local.sg_wireguard_external))
 }
 
-
-resource "aws_iam_role" "wireshark_worker_role" {
-  name               = "wireshark_worker_role"
-  assume_role_policy = data.aws_iam_policy_document.allow-assume-role-from-ec2-service.json
-}
-
-resource "aws_iam_role_policy_attachment" "wireshark_worker_role_ssm" {
-  role = aws_iam_role.wireshark_worker_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_instance_profile" "wireshark_worker_role" {
-  name = "wireshark_worker_role"
-  role = aws_iam_role.wireshark_worker_role.name
-}
-
 resource "aws_launch_configuration" "wireguard_launch_config" {
   name_prefix                 = "wireguard-${var.env}-"
   image_id                    = var.ami_id == null ? data.aws_ami.ubuntu.id : var.ami_id
   instance_type               = var.instance_type
   key_name                    = var.ssh_key_id
-  iam_instance_profile        = (var.eip_id != "disabled" ? aws_iam_instance_profile.wireguard_profile[0].name : null)
+  iam_instance_profile        = aws_iam_instance_profile.wireguard_profile.name
   user_data                   = data.template_file.user_data.rendered
   security_groups             = local.security_groups_ids
   associate_public_ip_address = (var.eip_id != "disabled" ? true : false)
-  iam_instance_profile        = aws_iam_instance_profile.wireshark_worker_role.name
   lifecycle {
     create_before_destroy = true
   }
