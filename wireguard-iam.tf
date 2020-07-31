@@ -29,7 +29,7 @@ resource "aws_iam_policy" "wireguard_eip_policy" {
 
 
 resource "aws_iam_role_policy_attachment" "wireshark_worker_role_ssm" {
-  role = aws_iam_role.wireshark_worker_role.name
+  role = aws_iam_role.wireguard_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
